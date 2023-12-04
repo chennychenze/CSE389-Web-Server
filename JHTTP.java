@@ -58,23 +58,6 @@ public class JHTTP {
                     Runnable r = new RequestProcessor(
                             rootDirectory, INDEX_FILE, request);
                     logger.log(Level.WARNING, "AFTER REQUEST PROCESSOR method call");
-                    /*
-                    Reader in = new InputStreamReader(
-                            new BufferedInputStream(
-                                    request.getInputStream()
-                            ), "US-ASCII"
-                    );
-
-                    // Read the request line
-                    StringBuilder requestLine = new StringBuilder();
-                    logger.log(Level.WARNING, "before while loop");
-
-                    while (true) {
-                        int c = in.read();
-                        if ((char) c == '\r' || (char) c == '\n') break;
-                        requestLine.append((char) c);
-                    }
-                     */
                     // Submit the RequestProcessor to the thread pool for execution
                     pool.submit(r);
                 } catch (IOException ex) {

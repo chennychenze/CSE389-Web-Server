@@ -45,7 +45,7 @@ public class RequestProcessor implements Runnable {
 
         // Set the connection
         this.connection = connection;
-        this.run();
+        //this.run();
     }
     private void readRequestHeader() {
         try {
@@ -70,37 +70,27 @@ public class RequestProcessor implements Runnable {
         } catch (IOException e) {
             logger.log(Level.WARNING, "Error reading request for authentication", e);
         }
-        logger.log(Level.WARNING, "Last line in authenticate");
+        logger.log(Level.WARNING, "Last line in read Header");
         return;
     }
     // Authentication method
     private boolean authenticate(Socket connection, String credentials) {
         try {
-            logger.log(Level.WARNING, "connection is open");
-            InputStream is = connection.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                logger.log(Level.WARNING, "line is: " + line);
-                if(line.equals("")) {
-                    break;
+            String line = this.basicAuthHeader;
+            if (line != null) {
+                String base64Credentials = line.substring("Authorization: Basic ".length()).trim();
+                byte[] userPass = (Base64.getDecoder().decode(base64Credentials));
+                String decodedString = new String(userPass);
+                logger.log(Level.WARNING, "Authentication: " + userPass);
+                if (decodedString.equals(credentials)) {
+                    logger.log(Level.WARNING, "Passed authentication");
                 }
-                if (line.startsWith("Authorization: Basic ")) {
-                    String base64Credentials = line.substring("Authorization: Basic ".length()).trim();
-                    byte [] userPass = (Base64.getDecoder().decode(base64Credentials));
-                    String decodedString = new String(userPass);
-                    logger.log(Level.WARNING, "Authentication: " + userPass);
-                    if(decodedString.equals(credentials)) {
-                        logger.log(Level.WARNING, "Passed authentication");
-                    }
-                    logger.log(Level.WARNING, "before return eqauls");
-                    return decodedString.equals(credentials);
-                }
+                logger.log(Level.WARNING, "before return equals");
+                return decodedString.equals(credentials);
             }
-        } catch (IOException e) {
-            logger.log(Level.WARNING, "Error reading request for authentication", e);
+        } finally {
+            logger.log(Level.WARNING, "Last line in authenticate");
         }
-        logger.log(Level.WARNING, "Last line in authenticate");
         return false;
     }
     private void sendAuthenticationRequiredResponse() {
@@ -158,7 +148,7 @@ public class RequestProcessor implements Runnable {
         // Comment out the following block if you want to use authentication
         // Uncomment the lines below and replace "username:password" with your desired credentials
         logger.log(Level.WARNING, "Run in different thread");
-
+        readRequestHeader();
         if (!authenticate(connection, "aalakkad:ajai")) {
             sendAuthenticationRequiredResponse();
             try {
@@ -182,24 +172,9 @@ public class RequestProcessor implements Runnable {
                     ), "US-ASCII"
             );
 
-            // Read the request line
-            StringBuilder requestLine = new StringBuilder();
-            logger.log(Level.WARNING, "before while loop");
-            while (true) {
-                int c = in.read();
-                if ((char) c == '\r' || (char) c == '\n') break;
-                requestLine.append((char) c);
-                logger.log(Level.WARNING, "request line: " + requestLine);
-                try {
-                    this.wait(10);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            logger.log(Level.WARNING, "after while loop");
 
             // Convert the request line to a string
-            String get = requestLine.toString();
+            String get = this.httpCommand;
 
             // Log information about the request
             logger.info(connection.getRemoteSocketAddress() + " " + get);
