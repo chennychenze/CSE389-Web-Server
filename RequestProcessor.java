@@ -149,7 +149,7 @@ public class RequestProcessor implements Runnable {
         // Uncomment the lines below and replace "username:password" with your desired credentials
         logger.log(Level.WARNING, "Run in different thread");
         readRequestHeader();
-        if (!authenticate(connection, "aalakkad:ajai")) {
+        if (!authenticate(connection, "admin:admin")) {
             sendAuthenticationRequiredResponse();
             try {
                 connection.close(); // Close the connection
