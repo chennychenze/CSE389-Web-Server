@@ -19,6 +19,7 @@ public class RequestProcessor implements Runnable {
     private String httpCommand;
 
     private String basicAuthHeader;
+    private boolean isAdmin  = false;
 
     // Constructor to initialize instance variables
     public RequestProcessor(File rootDirectory,
@@ -83,6 +84,12 @@ public class RequestProcessor implements Runnable {
                 String decodedString = new String(userPass);
                 logger.log(Level.WARNING, "Authentication: " + userPass);
                 if (decodedString.equals(credentials)) {
+                    if(credentials.startsWith("admin:")) {
+                        isAdmin = true;
+                    }
+                    else {
+                        isAdmin = false;
+                    }
                     logger.log(Level.WARNING, "Passed authentication");
                 }
                 logger.log(Level.WARNING, "before return equals");
@@ -149,7 +156,7 @@ public class RequestProcessor implements Runnable {
         // Uncomment the lines below and replace "username:password" with your desired credentials
         logger.log(Level.WARNING, "Run in different thread");
         readRequestHeader();
-        if (!authenticate(connection, "admin:admin")) {
+        if (!authenticate(connection, "admin:admin") && !authenticate(connection, "user:user")) {
             sendAuthenticationRequiredResponse();
             try {
                 connection.close(); // Close the connection
@@ -183,13 +190,20 @@ public class RequestProcessor implements Runnable {
             String[] tokens = get.split("\\s+");
             String method = tokens[0];
             String version = "";
-
             if (method.equals("GET")) {
                 // Process a GET request
                 String fileName = tokens[1];
-
                 // Append index file name if the requested file ends with "/"
                 if (fileName.endsWith("/")) fileName += indexFileName;
+                // Check if the requested file is special.html
+                if (fileName.equals("/special.html")) {
+                    // Deny access for user:user even if authenticated
+                    if (!isAdmin) {
+                        sendAuthenticationRequiredResponse();
+                        connection.close();
+                        return;
+                    }
+                }
 
                 // Get the content type based on the file extension
                 String contentType =
