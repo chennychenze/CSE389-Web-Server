@@ -1,6 +1,17 @@
 # CSE 389 - Web System Architecture and Programming - Term Project
 Building a Simple Web Server using Java by Chenze Chen, Aaron Alakkadan, Adebayo Afolabi, Benjamin Canfield
 
+## Features
+
+- [x] **HTTP Get Request**
+- [x] **HTTP Head Request**
+- [x] **HTTP Post Request**
+- [x] **Logging**
+- [x] **Multi-Threading**
+- [x] **Cache Requests**
+- [x] **Authentication**
+- [x] **Authorization**
+
 ## How to Run and Test the Project
 
 1. **Clone the Repository:**
