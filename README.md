@@ -1,37 +1,38 @@
 # CSE 389 - Web System Architecture and Programming - Term Project
-Building a Simple Web Server using Java by Chenze Chen, Aaron Alakkadan, Adebayo Afolabi, Benjamin Canfield
 
-## Features
+## Building a Simple Web Server using Java
+Authors: Chenze Chen, Aaron Alakkadan, Adebayo Afolabi, Benjamin Canfield
+
+### Features
 
 - [x] **HTTP Get Request**
 - [x] **HTTP Head Request**
 - [x] **HTTP Post Request**
 - [x] **Logging**
 - [x] **Multi-Threading**
-- [x] **Cache Requests**
+- [x] **Cached Requests**
 - [x] **Authentication**
 - [x] **Authorization**
 
 ## System Architecture
 
-This project comprises several key files responsible for different functionalities:
+This project consists of several key files responsible for different functionalities:
 
 - **JHTTP.java**: Initializes the HTTP server and manages incoming client requests.
-
+  
 - **RequestProcessor.java**: Processes incoming requests, determining appropriate actions based on the request type (GET, POST, HEAD).
-
+  
 - **CacheRequest.java**: Implements a basic caching system utilizing a `HashMap`. It provides methods to store and retrieve data based on keys (usually file names).
-
+  
 - **DataFetcher.java**: Demonstrates caching functionality by utilizing a `CacheRequest` instance to manage data storage and retrieval.
-
+  
 - **index.html**: The default file served by the server.
-
+  
 - **styles.css**: CSS file for `index.html`, enhancing its appearance.
-
+  
 - **hello.html**: A welcome page designed for authenticated users, facilitating testing of "GET" and "POST" methods.
-
-- **special.html**: A file used for testing web page accessibility, restricted to access by **admin/admin** credentials only.
-
+  
+- **special.html**: A file used for testing web page accessibility, restricted to access by the **admin/admin** credentials only.
 
 ## How to Run and Test the Project
 
