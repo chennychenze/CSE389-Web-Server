@@ -12,6 +12,10 @@ Building a Simple Web Server using Java by Chenze Chen, Aaron Alakkadan, Adebayo
 - [x] **Authentication**
 - [x] **Authorization**
 
+## System Architecture
+- `JHTTP.java` initializes the HTTP server and handles incoming client requests.
+- `RequestProcessor.java` processes incoming requests and delegates actions based on the request type (GET, POST, HEAD).
+
 ## How to Run and Test the Project
 
 1. **Clone the Repository:**
