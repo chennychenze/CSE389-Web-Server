@@ -3,10 +3,6 @@ Building a Simple Web Server using Java by Chenze Chen, Aaron Alakkadan, Adebayo
 
 ## How to Run and Test the Project
 
-This project demonstrates various HTTP request methods using a Java server. Follow these steps to run and test the functionalities locally:
-
-### Steps:
-
 1. **Clone the Repository:**
 
     ```bash
