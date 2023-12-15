@@ -10,6 +10,7 @@ public class RequestProcessor implements Runnable {
     // Logger for logging information and warnings
     private final static Logger logger = Logger.getLogger(
             RequestProcessor.class.getCanonicalName());
+    private static String submittedName = "";
 
     // Instance variables
     private File rootDirectory;
@@ -20,6 +21,8 @@ public class RequestProcessor implements Runnable {
 
     private String basicAuthHeader;
     private boolean isAdmin  = false;
+    private int contentLength;
+    private String requestBody;
 
     // Constructor to initialize instance variables
     public RequestProcessor(File rootDirectory,
@@ -36,6 +39,8 @@ public class RequestProcessor implements Runnable {
             rootDirectory = rootDirectory.getCanonicalFile();
         } catch (IOException ex) {
             // Ignore IOException during canonicalization
+            logger.log(Level.SEVERE, "Error getting canonical file", ex);
+            return;
         }
 
         // Initialize instance variables
@@ -66,8 +71,21 @@ public class RequestProcessor implements Runnable {
                     this.basicAuthHeader = line;
                     return;
                 }
+                else if (line.toLowerCase().startsWith("content-length:")) {
+                    this.contentLength = Integer.parseInt(line.substring(16).trim());
+                }
+                if(counter > 20) {
+                    break;
+                }
                 counter++;
             }
+            //code to read the post payload data
+            StringBuilder payload = new StringBuilder();
+            while(reader.ready()){
+                payload.append((char) reader.read());
+            }
+            this.requestBody = payload.toString();
+            logger.log(Level.WARNING, "Payload data is: " + payload.toString());
         } catch (IOException e) {
             logger.log(Level.WARNING, "Error reading request for authentication", e);
         }
@@ -173,12 +191,13 @@ public class RequestProcessor implements Runnable {
                     connection.getOutputStream()
             );
             out = new OutputStreamWriter(raw);
+            logger.log(Level.WARNING, "before input stream");
             Reader in = new InputStreamReader(
                     new BufferedInputStream(
                             connection.getInputStream()
                     ), "US-ASCII"
             );
-
+            logger.log(Level.WARNING, "after input stream");
 
             // Convert the request line to a string
             String get = this.httpCommand;
@@ -189,10 +208,35 @@ public class RequestProcessor implements Runnable {
             // Split the request into tokens
             String[] tokens = get.split("\\s+");
             String method = tokens[0];
+            // Process a GET request
+            String fileName = tokens[1];
+            String path = fileName;
             String version = "";
-            if (method.equals("GET")) {
-                // Process a GET request
-                String fileName = tokens[1];
+            if (method.equals("GET") || method.equals("HEAD")) {
+                if (path.equals("/post-name/hello")) {
+                    if(isAdmin) {
+                        submittedName = "admin"; // Storing the submitted name
+                    }
+                    else {
+                        submittedName = "user";
+                    }
+                    // Generating HTML content based on a submitted name
+                    String htmlContent = "<html><head><title>Hello Page</title></head><body>"
+                            + "<h1>Welcome to the Hello Page!</h1>"
+                            + "<p>Hello, " + submittedName + "!</p>"
+                            + "</body></html>";
+
+                    // Constructing HTTP response headers
+                    String header = "HTTP/1.1 200 OK\r\n" +
+                            "Content-Length: " + htmlContent.getBytes(StandardCharsets.UTF_8).length + "\r\n" +
+                            "Content-Type: text/html\r\n\r\n";
+
+                    // Sending HTTP response
+                    out.write(header);
+                    out.write(htmlContent);
+                    out.flush();
+                    return;
+                }
                 // Append index file name if the requested file ends with "/"
                 if (fileName.endsWith("/")) fileName += indexFileName;
                 // Check if the requested file is special.html
@@ -245,6 +289,53 @@ public class RequestProcessor implements Runnable {
                     // Send the error response body
                     out.write(body);
                     out.flush();
+                }
+            }
+            else if (method.equalsIgnoreCase("POST")) {
+                // Handling POST requests
+                if (path.startsWith("/post-name/hello")) {
+                    String name = ""; // Declare the name variable
+
+                    // Processing the POST request data
+                    StringBuilder requestData = new StringBuilder();
+                    //int contentLength = 0;
+
+                    // Reading request body (form data)
+                    /*
+                    char[] body = new char[this.contentLength];
+                    logger.log(Level.WARNING, "before in read");
+                    int bytesRead = in.read(body);
+                    logger.log(Level.WARNING, "bytesRead : " + bytesRead);
+                    logger.log(Level.WARNING, "contentLength : " + this.contentLength);
+                    if (bytesRead == this.contentLength) {
+                        requestData.append(body);
+                    }
+                    logger.log(Level.WARNING, "requestData: " + requestData);
+                     */
+                    // Parsing received form data to extract the name
+                    String[] formData = this.requestBody.split("&");
+                    for (String data : formData) {
+                        String[] keyValue = data.split("=");
+                        if (keyValue.length == 2 && keyValue[0].equals("name")) {
+                            name = URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8);
+                            break;
+                        }
+                    }
+                    if(isAdmin) {
+                        submittedName = "admin"; // Storing the submitted name
+                    }
+                    else {
+                        submittedName = "user";
+                    }
+
+                    // Redirecting the client to /post-name/hello
+                    String redirectHeader = "HTTP/1.1 303 See Other\r\n" +
+                            "Location: /post-name/hello\r\n\r\n";
+
+                    out.write(redirectHeader);
+                    out.flush();
+
+                    logger.log(Level.WARNING,"Received name: " + name);
                 }
             } else { // Method is not "GET"
                 String body = new StringBuilder("<HTML>\r\n")
