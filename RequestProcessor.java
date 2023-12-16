@@ -23,10 +23,12 @@ public class RequestProcessor implements Runnable {
     private boolean isAdmin  = false;
     private int contentLength;
     private String requestBody;
+    //instance of CacheRequest for managing caching.....
+    private CacheRequest cacheRequest;
 
     // Constructor to initialize instance variables
     public RequestProcessor(File rootDirectory,
-                            String indexFileName, Socket connection) {
+                            String indexFileName, Socket connection, CacheRequest cacheRequest) {
         logger.log(Level.WARNING, "first line log");
         // Check if rootDirectory is a directory, not a file
         if (rootDirectory.isFile()) {
@@ -45,6 +47,8 @@ public class RequestProcessor implements Runnable {
 
         // Initialize instance variables
         this.rootDirectory = rootDirectory;
+        //set reference to CacheRequest.....
+        this.cacheRequest = cacheRequest;
 
         // Set index file name, if provided
         if (indexFileName != null) this.indexFileName = indexFileName;
@@ -260,11 +264,19 @@ public class RequestProcessor implements Runnable {
                 // Construct the file object for the requested resource
                 File theFile = new File(rootDirectory,
                         fileName.substring(1, fileName.length()));
-
+                byte[] theData;
                 // Check if the file is readable and within the document root
                 if (theFile.canRead() && theFile.getCanonicalPath().startsWith(root)) {
-                    // Read the file content into a byte array
-                    byte[] theData = Files.readAllBytes(theFile.toPath());
+                    if (this.cacheRequest.getFromCache(fileName) == null) {
+                        // Read the file content into a byte array
+                        theData = Files.readAllBytes(theFile.toPath());
+                        logger.info("Reading from disk: " + fileName);
+                    }
+                    else {
+                        // Read the file content into a byte array
+                        theData = this.cacheRequest.getFromCache(fileName).getBytes();
+                        logger.info("Cache request served for: " + fileName);
+                    }
 
                     if (version.startsWith("HTTP/")) { // Send a MIME header
                         sendHeader(out, "HTTP/1.0 200 OK", contentType, theData.length);
@@ -273,6 +285,9 @@ public class RequestProcessor implements Runnable {
                     // Send the file content; it may be binary data, so use raw output stream
                     raw.write(theData);
                     raw.flush();
+                    //Cache data for future requests.....
+                    this.cacheRequest.addToCache(fileName, new String(theData, StandardCharsets.UTF_8));
+
                 } else { // File not found
                     String body = new StringBuilder("<HTML>\r\n")
                             .append("<HEAD><TITLE>File Not Found</TITLE>\r\n")

@@ -21,6 +21,9 @@ public class JHTTP {
     // Port on which the server will listen
     private final int port;
 
+    // instance of CacheRequest for managing caching.....
+    private CacheRequest cacheRequest;
+
     // Constructor for initializing the server with a root directory and port
     public JHTTP(File rootDirectory, int port) throws IOException {
 
@@ -33,6 +36,8 @@ public class JHTTP {
         // Initialize instance variables
         this.rootDirectory = rootDirectory;
         this.port = port;
+        //creates new instance of CacheRequest.....
+        this.cacheRequest = new CacheRequest();
     }
 
     // Method to start the server
@@ -56,7 +61,7 @@ public class JHTTP {
                     logger.log(Level.WARNING, "AFTER SERVER statement");
                     // Create a RequestProcessor (a Runnable) for processing the request
                     Runnable r = new RequestProcessor(
-                            rootDirectory, INDEX_FILE, request);
+                            rootDirectory, INDEX_FILE, request, cacheRequest);
                     logger.log(Level.WARNING, "AFTER REQUEST PROCESSOR method call");
                     // Submit the RequestProcessor to the thread pool for execution
                     pool.submit(r);
